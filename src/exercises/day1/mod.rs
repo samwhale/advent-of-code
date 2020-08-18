@@ -1,4 +1,4 @@
-mod utils;
+use super::super::utils;
 
 pub mod fuel_counter {
   // Calculates the fuel requirement for a given mass
@@ -20,7 +20,7 @@ pub mod fuel_counter {
 }
 
 pub fn main(ignore_fuel_mass: bool) {
-  let data: Vec<String> = utils::read_file("src/exercises/day1/data.txt");
+  let data: Vec<String> = utils::read_file("./src/exercises/day1/data.txt");
   let mut result: i32 = 0;
 
   for val in &data {
