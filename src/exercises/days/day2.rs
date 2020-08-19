@@ -4,18 +4,18 @@ struct IntCodeComputer {
     code: Vec<u32>,
 }
 
-pub fn add(code: &Vec<u32>, [index1, index2, index3]: [u32; 3]) -> Vec<u32> {
+pub fn add(code: &Vec<u32>, [addr1, addr2, addr3]: [u32; 3]) -> Vec<u32> {
     let mut code = code.clone();
-    let sum = code[index1 as usize] + code[index2 as usize];
-    code[index3 as usize] = sum;
+    let sum = code[addr1 as usize] + code[addr2 as usize];
+    code[addr3 as usize] = sum;
 
     return code;
 }
 
-pub fn multiply(code: &Vec<u32>, [index1, index2, index3]: [u32; 3]) -> Vec<u32> {
+pub fn multiply(code: &Vec<u32>, [addr1, addr2, addr3]: [u32; 3]) -> Vec<u32> {
     let mut code = code.clone();
-    let mult = code[index1 as usize] * code[index2 as usize];
-    code[index3 as usize] = mult;
+    let mult = code[addr1 as usize] * code[addr2 as usize];
+    code[addr3 as usize] = mult;
 
     return code;
 }
@@ -35,15 +35,15 @@ impl IntCodeComputer {
         let chunk_len = code_len / 4;
 
         for i in 0..chunk_len {
-            let vec_index = i * 4;
-            match self.code[vec_index] {
+            let instr_pointer = i * 4;
+            match self.code[instr_pointer] {
                 1 => {
                     self.code = add(
                         &self.code,
                         [
-                            self.code[vec_index + 1],
-                            self.code[vec_index + 2],
-                            self.code[vec_index + 3],
+                            self.code[instr_pointer + 1],
+                            self.code[instr_pointer + 2],
+                            self.code[instr_pointer + 3],
                         ],
                     );
                 }
@@ -51,9 +51,9 @@ impl IntCodeComputer {
                     self.code = multiply(
                         &self.code,
                         [
-                            self.code[vec_index + 1],
-                            self.code[vec_index + 2],
-                            self.code[vec_index + 3],
+                            self.code[instr_pointer + 1],
+                            self.code[instr_pointer + 2],
+                            self.code[instr_pointer + 3],
                         ],
                     );
                 }
