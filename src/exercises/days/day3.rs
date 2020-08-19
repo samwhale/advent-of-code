@@ -11,6 +11,7 @@ fn get_distance_to_origin(coord: &Coordinate) -> i32 {
 fn get_coordinates(wire_path: &str) -> HashSet<Coordinate> {
     let mut set = HashSet::new();
     let mut current_location = Coordinate(0, 0);
+    set.insert(current_location);
 
     for command in wire_path.split(",") {
         let direction = &command[0..1];
@@ -60,18 +61,18 @@ pub fn get_min_manhattan_intersection_distance(wire_1: &str, wire_2: &str) -> i3
     let wire_1_coords = get_coordinates(wire_1);
     let wire_2_coords = get_coordinates(wire_2);
 
-    let mut intersecting_coords = wire_1_coords.intersection(&wire_2_coords);
+    let intersecting_coords = wire_1_coords.intersection(&wire_2_coords);
 
-    let mut min_value = get_distance_to_origin(intersecting_coords.next().unwrap());
-    for intersection in intersecting_coords {
-        let distance = get_distance_to_origin(intersection);
+    let result = intersecting_coords
+        .filter_map(|coord| {
+            let result = get_distance_to_origin(coord);
 
-        if min_value > distance && distance != 0 {
-            min_value = distance;
-        }
-    }
+            return if result != 0 { Some(result) } else { None };
+        })
+        .min()
+        .unwrap();
 
-    min_value
+    result
 }
 
 pub fn main() {
@@ -94,7 +95,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn min_distance_test() {
+    fn get_min_manhattan_intersection_distance_test() {
         assert_eq!(
             get_min_manhattan_intersection_distance("R8,U5,L5,D3", "U7,R6,D4,L4"),
             6
@@ -113,5 +114,18 @@ mod tests {
             ),
             135
         );
+    }
+
+    #[test]
+    fn get_coordinates_test() {
+        let mut result = HashSet::new();
+        result.insert(Coordinate(0, 0));
+        result.insert(Coordinate(1, 0));
+        result.insert(Coordinate(2, 0));
+        result.insert(Coordinate(2, 1));
+        result.insert(Coordinate(2, -1));
+        result.insert(Coordinate(1, -1));
+
+        assert_eq!(get_coordinates("R2,U1,D2,L1"), result);
     }
 }
