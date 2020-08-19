@@ -11,12 +11,10 @@ fn get_distance_to_origin(coord: &Coordinate) -> i32 {
 fn get_coordinates(wire_path: &str) -> HashSet<Coordinate> {
     let mut set = HashSet::new();
     let mut current_location = Coordinate(0, 0);
-    // set.insert(current_location);
 
     for command in wire_path.split(",") {
         let direction = &command[0..1];
         let dist = &command[1..].parse::<i32>().unwrap();
-        // println!("{}, {}", direction, dist);
 
         match direction {
             "U" => {
@@ -25,7 +23,6 @@ fn get_coordinates(wire_path: &str) -> HashSet<Coordinate> {
                 for _i in current_location.1..new_y {
                     current_location.1 += 1;
                     set.insert(current_location);
-                    // println!("U: {:?}", current_location);
                 }
             }
             "R" => {
@@ -34,7 +31,6 @@ fn get_coordinates(wire_path: &str) -> HashSet<Coordinate> {
                 for _i in current_location.0..new_x {
                     current_location.0 += 1;
                     set.insert(current_location);
-                    // println!("R: {:?}", current_location);
                 }
             }
             "D" => {
@@ -43,7 +39,6 @@ fn get_coordinates(wire_path: &str) -> HashSet<Coordinate> {
                 for _i in new_y..current_location.1 {
                     current_location.1 -= 1;
                     set.insert(current_location);
-                    // println!("D: {:?}", current_location);
                 }
             }
             "L" => {
@@ -52,7 +47,6 @@ fn get_coordinates(wire_path: &str) -> HashSet<Coordinate> {
                 for _i in new_x..current_location.0 {
                     current_location.0 -= 1;
                     set.insert(current_location);
-                    // println!("L: {:?}", current_location);
                 }
             }
             _ => (),
