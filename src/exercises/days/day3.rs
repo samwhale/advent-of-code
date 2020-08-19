@@ -19,33 +19,25 @@ fn get_coordinates(wire_path: &str) -> HashSet<Coordinate> {
 
         match direction {
             "U" => {
-                let new_y = current_location.1 + dist;
-
-                for _i in current_location.1..new_y {
+                for _i in 0..*dist {
                     current_location.1 += 1;
                     set.insert(current_location);
                 }
             }
             "R" => {
-                let new_x = current_location.0 + dist;
-
-                for _i in current_location.0..new_x {
+                for _i in 0..*dist {
                     current_location.0 += 1;
                     set.insert(current_location);
                 }
             }
             "D" => {
-                let new_y = current_location.1 - dist;
-
-                for _i in new_y..current_location.1 {
+                for _i in 0..*dist {
                     current_location.1 -= 1;
                     set.insert(current_location);
                 }
             }
             "L" => {
-                let new_x = current_location.0 - dist;
-
-                for _i in new_x..current_location.0 {
+                for _i in 0..*dist {
                     current_location.0 -= 1;
                     set.insert(current_location);
                 }
