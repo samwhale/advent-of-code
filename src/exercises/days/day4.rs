@@ -18,24 +18,30 @@ fn has_adjacent(value: &str) -> bool {
 }
 
 // part 2
-fn has_double(value: &str) -> bool {
-    let mut split: Vec<String> = vec![];
+fn group_by_character(value: &str) -> Vec<String> {
+    let mut grouped: Vec<String> = vec![];
 
     for i in 0..value.len() {
         let char = &value[i..i + 1];
 
-        if let Some(string) = split.last_mut() {
+        if let Some(string) = grouped.last_mut() {
             if string[0..1] == char.to_string() {
                 *string = format!("{}{}", string, char);
             } else {
-                split.push(char.to_string());
+                grouped.push(char.to_string());
             }
         } else {
-            split.push(char.to_string());
+            grouped.push(char.to_string());
         }
     }
 
-    for string in split.iter() {
+    grouped
+}
+
+fn has_double(value: &str) -> bool {
+    let grouped = group_by_character(value);
+
+    for string in grouped.iter() {
         if string.len() == 2 {
             return true;
         }
