@@ -12,14 +12,14 @@ fn main() {
             "day1" => {
                 days::day1::main(true);
                 days::day1::main(false);
-            },
+            }
             "day2" => {
                 days::day2::main();
-            },
+            }
             "day3" => {
                 days::day3::main();
-            },
-            _ => ()
+            }
+            _ => (),
         }
     } else {
         println!("lol that is not valid input dawg (hint: cargo run day2)");

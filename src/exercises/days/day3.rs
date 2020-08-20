@@ -1,8 +1,8 @@
 use super::super::super::utils;
-use std::collections::HashSet;
-use std::collections::HashMap;
-use std::collections::hash_set::Intersection;
 use std::collections::hash_map::RandomState;
+use std::collections::hash_set::Intersection;
+use std::collections::HashMap;
+use std::collections::HashSet;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 struct Coordinate {
@@ -14,7 +14,11 @@ fn get_distance_to_origin(coord: &Coordinate) -> i32 {
     coord.x.abs() + coord.y.abs()
 }
 
-fn get_smallest_distance(distances: &HashMap<Coordinate, u32>, location: &Coordinate, distance: u32) -> u32 {
+fn get_smallest_distance(
+    distances: &HashMap<Coordinate, u32>,
+    location: &Coordinate,
+    distance: u32,
+) -> u32 {
     match distances.get(location) {
         Some(dist) => {
             if distance < *dist {
@@ -22,10 +26,8 @@ fn get_smallest_distance(distances: &HashMap<Coordinate, u32>, location: &Coordi
             } else {
                 *dist
             }
-        },
-        None => {
-            distance
         }
+        None => distance,
     }
 }
 
@@ -33,7 +35,7 @@ fn get_coordinates(wire_path: &str) -> (HashSet<Coordinate>, HashMap<Coordinate,
     let mut coordinates = HashSet::new();
     let mut distances: HashMap<Coordinate, u32> = HashMap::new();
 
-    let mut current_location = Coordinate { x: 0, y: 0 } ;
+    let mut current_location = Coordinate { x: 0, y: 0 };
     let mut current_distance = 0;
 
     // initialize first point
@@ -50,7 +52,10 @@ fn get_coordinates(wire_path: &str) -> (HashSet<Coordinate>, HashMap<Coordinate,
                     current_location.y += 1;
                     current_distance += 1;
                     coordinates.insert(current_location);
-                    distances.insert(current_location, get_smallest_distance(&distances, &current_location, current_distance));
+                    distances.insert(
+                        current_location,
+                        get_smallest_distance(&distances, &current_location, current_distance),
+                    );
                 }
             }
             "R" => {
@@ -58,7 +63,10 @@ fn get_coordinates(wire_path: &str) -> (HashSet<Coordinate>, HashMap<Coordinate,
                     current_location.x += 1;
                     current_distance += 1;
                     coordinates.insert(current_location);
-                    distances.insert(current_location, get_smallest_distance(&distances, &current_location, current_distance));
+                    distances.insert(
+                        current_location,
+                        get_smallest_distance(&distances, &current_location, current_distance),
+                    );
                 }
             }
             "D" => {
@@ -66,7 +74,10 @@ fn get_coordinates(wire_path: &str) -> (HashSet<Coordinate>, HashMap<Coordinate,
                     current_location.y -= 1;
                     current_distance += 1;
                     coordinates.insert(current_location);
-                    distances.insert(current_location, get_smallest_distance(&distances, &current_location, current_distance));
+                    distances.insert(
+                        current_location,
+                        get_smallest_distance(&distances, &current_location, current_distance),
+                    );
                 }
             }
             "L" => {
@@ -74,7 +85,10 @@ fn get_coordinates(wire_path: &str) -> (HashSet<Coordinate>, HashMap<Coordinate,
                     current_location.x -= 1;
                     current_distance += 1;
                     coordinates.insert(current_location);
-                    distances.insert(current_location, get_smallest_distance(&distances, &current_location, current_distance));
+                    distances.insert(
+                        current_location,
+                        get_smallest_distance(&distances, &current_location, current_distance),
+                    );
                 }
             }
             _ => (),
@@ -84,14 +98,21 @@ fn get_coordinates(wire_path: &str) -> (HashSet<Coordinate>, HashMap<Coordinate,
     (coordinates, distances)
 }
 
-fn get_fewest_combined_steps(intersecting_coords: Intersection<Coordinate, RandomState>, wire_1_distances: HashMap<Coordinate, u32>, wire_2_distances: HashMap<Coordinate, u32>) -> u32 {
-    intersecting_coords.filter_map(|coord| {
-        let wire_1_distance = wire_1_distances.get(coord).unwrap();
-        let wire_2_distance = wire_2_distances.get(coord).unwrap();
-        let distance = wire_1_distance + wire_2_distance;
+fn get_fewest_combined_steps(
+    intersecting_coords: Intersection<Coordinate, RandomState>,
+    wire_1_distances: HashMap<Coordinate, u32>,
+    wire_2_distances: HashMap<Coordinate, u32>,
+) -> u32 {
+    intersecting_coords
+        .filter_map(|coord| {
+            let wire_1_distance = wire_1_distances.get(coord).unwrap();
+            let wire_2_distance = wire_2_distances.get(coord).unwrap();
+            let distance = wire_1_distance + wire_2_distance;
 
-        return if distance > 0 { Some(distance) } else { None }
-    }).min().unwrap()
+            return if distance > 0 { Some(distance) } else { None };
+        })
+        .min()
+        .unwrap()
 }
 
 fn get_min_manhattan_distance(intersecting_coords: Intersection<Coordinate, RandomState>) -> i32 {
@@ -99,7 +120,11 @@ fn get_min_manhattan_distance(intersecting_coords: Intersection<Coordinate, Rand
         .filter_map(|coord| {
             let min_distance = get_distance_to_origin(coord);
 
-            return if min_distance != 0 { Some(min_distance) } else { None };
+            return if min_distance != 0 {
+                Some(min_distance)
+            } else {
+                None
+            };
         })
         .min()
         .unwrap();
@@ -125,7 +150,8 @@ pub fn main() {
     let wire_1 = message.get(0);
     let wire_2 = message.get(1);
 
-    let (min_distance, fewest_steps) = process_wires(wire_1.unwrap().trim(), wire_2.unwrap().trim());
+    let (min_distance, fewest_steps) =
+        process_wires(wire_1.unwrap().trim(), wire_2.unwrap().trim());
 
     println!("--- Day 3 ---");
     println!("min_distance: {}", min_distance);
@@ -140,10 +166,7 @@ mod tests {
 
     #[test]
     fn process_wires_test() {
-        assert_eq!(
-            process_wires("R8,U5,L5,D3", "U7,R6,D4,L4"),
-            (6, 30)
-        );
+        assert_eq!(process_wires("R8,U5,L5,D3", "U7,R6,D4,L4"), (6, 30));
         assert_eq!(
             process_wires(
                 "R75,D30,R83,U83,L12,D49,R71,U7,L72",
@@ -163,12 +186,12 @@ mod tests {
     #[test]
     fn get_coordinates_test() {
         let mut result = HashSet::new();
-        result.insert(Coordinate{ x: 0, y: 0 });
-        result.insert(Coordinate{ x: 1, y: 0 });
-        result.insert(Coordinate{ x: 2, y: 0 });
-        result.insert(Coordinate{ x: 2, y: 1 });
-        result.insert(Coordinate{ x: 2, y: -1 });
-        result.insert(Coordinate{ x: 1, y: -1 });
+        result.insert(Coordinate { x: 0, y: 0 });
+        result.insert(Coordinate { x: 1, y: 0 });
+        result.insert(Coordinate { x: 2, y: 0 });
+        result.insert(Coordinate { x: 2, y: 1 });
+        result.insert(Coordinate { x: 2, y: -1 });
+        result.insert(Coordinate { x: 1, y: -1 });
 
         assert_eq!(get_coordinates("R2,U1,D2,L1").0, result);
     }
