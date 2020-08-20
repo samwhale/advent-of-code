@@ -10,14 +10,16 @@ fn main() {
     if let Some(value) = args.get(1) {
         match &value[..] {
             "day1" => {
-                days::day1::main(true);
-                days::day1::main(false);
+                days::day1::main();
             }
             "day2" => {
                 days::day2::main();
             }
             "day3" => {
                 days::day3::main();
+            }
+            "day4" => {
+                days::day4::main();
             }
             _ => (),
         }

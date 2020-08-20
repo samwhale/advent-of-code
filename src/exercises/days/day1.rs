@@ -17,23 +17,21 @@ pub mod fuel_counter {
     }
 }
 
-pub fn main(ignore_fuel_mass: bool) {
+pub fn main() {
     let data: Vec<String> = utils::read_file_into_vector("./src/exercises/data/data-day1.txt");
+    let mut result_ignore_fuel_mass: i32 = 0;
     let mut result: i32 = 0;
 
     for val in &data {
         let mass = val.parse::<i32>().unwrap();
 
-        if ignore_fuel_mass {
-            result += fuel_counter::calculate_fuel(mass);
-        } else {
-            let calc_mass = fuel_counter::calculate_fuel_with_fuel_mass(mass);
-            result += calc_mass
-        }
+        result_ignore_fuel_mass += fuel_counter::calculate_fuel(mass);
+
+        let calc_mass = fuel_counter::calculate_fuel_with_fuel_mass(mass);
+        result += calc_mass;
     }
 
     println!("--- Day 1 ---");
-    println!("Account for mass of fuel: {}", !ignore_fuel_mass);
-    // println!("message: {:?}", data);
-    println!("result: {:?}", result);
+    println!("result part 1: {:?}", result_ignore_fuel_mass);
+    println!("result part 2: {:?}", result);
 }
