@@ -1,66 +1,109 @@
 pub struct IntCodeComputer {
-  pub code: Vec<u32>,
-}
-
-fn add(code: &Vec<u32>, [addr1, addr2, addr3]: [u32; 3]) -> Vec<u32> {
-  let mut code = code.clone();
-  let sum = code[addr1 as usize] + code[addr2 as usize];
-  code[addr3 as usize] = sum;
-
-  return code;
-}
-
-fn multiply(code: &Vec<u32>, [addr1, addr2, addr3]: [u32; 3]) -> Vec<u32> {
-  let mut code = code.clone();
-  let mult = code[addr1 as usize] * code[addr2 as usize];
-  code[addr3 as usize] = mult;
-
-  return code;
+  pub code: Vec<i32>,
+  pub inputs: Vec<i32>,
 }
 
 impl IntCodeComputer {
   pub fn new() -> Self {
-    Self { code: Vec::new() }
+    Self {
+      code: Vec::new(),
+      inputs: Vec::new(),
+    }
   }
 
   fn read(&mut self, message: &str) {
     for val in message.trim().split(",") {
-      let val = val.parse::<u32>().unwrap();
+      let val = val.parse::<i32>().unwrap();
       self.code.push(val);
     }
   }
 
-  pub fn process_code(mut self, message: &str) -> Vec<u32> {
+  pub fn add_inputs(&mut self, inputs: Vec<i32>) {
+    self.inputs = inputs;
+  }
+
+  fn add(&mut self, [address_of_value_1, address_of_value_2, address_to_update]: [usize; 3]) {
+    let sum = self.code[address_of_value_1] + self.code[address_of_value_2];
+
+    self.code[address_to_update] = sum;
+  }
+
+  fn multiply(&mut self, [address_of_value_1, address_of_value_2, address_to_update]: [usize; 3]) {
+    let sum = self.code[address_of_value_1] * self.code[address_of_value_2];
+
+    self.code[address_to_update] = sum;
+  }
+
+  fn insert(&mut self, address: usize) {
+    let address_to_update = self.code[address + 1] as usize;
+
+    self.code[address_to_update] = self.inputs[0];
+    self.inputs.drain(0..1);
+  }
+
+  fn get_value(&self, address: usize) {
+    let address_to_lookup = self.code[address + 1] as usize;
+    println!("output: {}", self.code[address_to_lookup]);
+  }
+
+  fn get_address_from_parameter(&self, address: usize, parameter: i32) -> usize {
+    if parameter == 1 {
+      return address as usize;
+    }
+
+    self.code[address as usize] as usize
+  }
+
+  fn get_opcode_and_parameters(&self, address: usize) -> ([i32; 3], i32) {
+    let full_opcode = self.code[address];
+    let opcode = full_opcode % 100;
+    let parameters: [i32; 3] = [
+      full_opcode / 10000 % 10,
+      full_opcode / 1000 % 10,
+      full_opcode / 100 % 10,
+    ];
+    (parameters, opcode)
+  }
+
+  pub fn process_code(mut self, message: &str) -> Vec<i32> {
     self.read(message);
-
-    let code_len = self.code.len();
-    let chunk_len = code_len / 4;
-
-    for i in 0..chunk_len {
-      let instr_pointer = i * 4;
-      match self.code[instr_pointer] {
+    let mut instruction_pointer = 0;
+    loop {
+      let (parameters, opcode) = self.get_opcode_and_parameters(instruction_pointer);
+      match opcode {
         1 => {
-          self.code = add(
-            &self.code,
-            [
-              self.code[instr_pointer + 1],
-              self.code[instr_pointer + 2],
-              self.code[instr_pointer + 3],
-            ],
-          );
+          let address_of_value_1 =
+            self.get_address_from_parameter(instruction_pointer + 1, parameters[2]);
+          let address_of_value_2 =
+            self.get_address_from_parameter(instruction_pointer + 2, parameters[1]);
+          let address_to_update =
+            self.get_address_from_parameter(instruction_pointer + 3, parameters[0]);
+          self.add([address_of_value_1, address_of_value_2, address_to_update]);
+          instruction_pointer += 4
         }
         2 => {
-          self.code = multiply(
-            &self.code,
-            [
-              self.code[instr_pointer + 1],
-              self.code[instr_pointer + 2],
-              self.code[instr_pointer + 3],
-            ],
-          );
+          let address_of_value_1 =
+            self.get_address_from_parameter(instruction_pointer + 1, parameters[2]);
+          let address_of_value_2 =
+            self.get_address_from_parameter(instruction_pointer + 2, parameters[1]);
+          let address_to_update =
+            self.get_address_from_parameter(instruction_pointer + 3, parameters[0]);
+          self.multiply([address_of_value_1, address_of_value_2, address_to_update]);
+          instruction_pointer += 4
+        }
+        3 => {
+          self.insert(instruction_pointer);
+          instruction_pointer += 2;
+        }
+        4 => {
+          self.get_value(instruction_pointer);
+          instruction_pointer += 2;
         }
         99 => break,
-        _ => break,
+        _any => {
+          println!("uh oh, got input: {}", _any);
+          panic!()
+        }
       }
     }
 
@@ -73,20 +116,48 @@ mod tests {
   use super::*;
 
   #[test]
-  fn process_code_test() {
+  fn process_code_1() {
     let comp1 = IntCodeComputer::new();
-    let comp2 = IntCodeComputer::new();
-    let comp3 = IntCodeComputer::new();
-    let comp4 = IntCodeComputer::new();
     assert_eq!(comp1.process_code("1,0,0,0,99"), vec![2, 0, 0, 0, 99]);
+  }
+  #[test]
+  fn process_code_2() {
+    let comp2 = IntCodeComputer::new();
     assert_eq!(comp2.process_code("2,3,0,3,99"), vec![2, 3, 0, 6, 99]);
+  }
+
+  #[test]
+  fn process_code_3() {
+    let comp3 = IntCodeComputer::new();
     assert_eq!(
-      comp3.process_code("2,4,4,5,99,0"),
+      comp3.process_code("02,4,4,5,99,0"),
       vec![2, 4, 4, 5, 99, 9801]
     );
+  }
+
+  #[test]
+  fn process_code_4() {
+    let comp4 = IntCodeComputer::new();
     assert_eq!(
-      comp4.process_code("1,1,1,4,99,5,6,0,99"),
+      comp4.process_code("01,1,1,4,99,5,6,0,99"),
       vec![30, 1, 1, 4, 2, 5, 6, 0, 99]
+    );
+  }
+
+  #[test]
+  fn process_code_5() {
+    let comp4 = IntCodeComputer::new();
+    assert_eq!(comp4.process_code("1002,4,3,4,33"), vec![1002, 4, 3, 4, 99]);
+  }
+
+  #[test]
+  fn process_code_with_insert() {
+    let mut comp1 = IntCodeComputer::new();
+    comp1.add_inputs(vec![1]);
+
+    assert_eq!(
+      comp1.process_code("01,0,0,0,3,3,99"),
+      vec![2, 0, 0, 1, 3, 3, 99]
     );
   }
 }
