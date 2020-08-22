@@ -22,20 +22,40 @@ impl IntCodeComputer {
     self.inputs = inputs;
   }
 
-  fn add(&mut self, [address_of_value_1, address_of_value_2, address_to_update]: [usize; 3]) {
-    let sum = self.code[address_of_value_1] + self.code[address_of_value_2];
+  /**
+   * Sum the values at `address_of_param_1` and `address_of_param_2`.
+   * Insert the result at the `address_to_update`
+   */
+  fn add(&mut self, instruction_pointer: usize, [mode_3, mode_2, mode_1]: [i32; 3]) {
+    let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, mode_1);
+    let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, mode_2);
+    let address_to_update = self.get_address_from_mode(instruction_pointer + 3, mode_3);
+
+    let sum = self.code[address_of_param_1] + self.code[address_of_param_2];
 
     self.code[address_to_update] = sum;
   }
 
-  fn multiply(&mut self, [address_of_value_1, address_of_value_2, address_to_update]: [usize; 3]) {
-    let mult = self.code[address_of_value_1] * self.code[address_of_value_2];
+  /**
+   * Multiply the values of parameter 1 and 2
+   * Insert the result at the `address_to_update`
+   */
+  fn multiply(&mut self, instruction_pointer: usize, [mode_3, mode_2, mode_1]: [i32; 3]) {
+    let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, mode_1);
+    let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, mode_2);
+    let address_to_update = self.get_address_from_mode(instruction_pointer + 3, mode_3);
+
+    let mult = self.code[address_of_param_1] * self.code[address_of_param_2];
 
     self.code[address_to_update] = mult;
   }
 
-  fn insert(&mut self, address: usize) {
-    let address_to_update = self.code[address + 1] as usize;
+  /**
+   * Multiply the values at `address_of_param_1` and `address_of_param_2`.
+   * Insert the result at the `address_to_update`
+   */
+  fn insert(&mut self, instruction_pointer: usize) {
+    let address_to_update = self.code[instruction_pointer + 1] as usize;
 
     self.code[address_to_update] = self.inputs[0];
     self.inputs.drain(0..1);
@@ -69,20 +89,14 @@ impl IntCodeComputer {
     self.read(message);
     let mut instruction_pointer = 0;
     loop {
-      let ([mode_0, mode_1, mode_2], opcode) = self.get_opcode_and_modes(instruction_pointer);
+      let (modes, opcode) = self.get_opcode_and_modes(instruction_pointer);
       match opcode {
         1 => {
-          let address_of_value_1 = self.get_address_from_mode(instruction_pointer + 1, mode_2);
-          let address_of_value_2 = self.get_address_from_mode(instruction_pointer + 2, mode_1);
-          let address_to_update = self.get_address_from_mode(instruction_pointer + 3, mode_0);
-          self.add([address_of_value_1, address_of_value_2, address_to_update]);
+          self.add(instruction_pointer, modes);
           instruction_pointer += 4
         }
         2 => {
-          let address_of_value_1 = self.get_address_from_mode(instruction_pointer + 1, mode_2);
-          let address_of_value_2 = self.get_address_from_mode(instruction_pointer + 2, mode_1);
-          let address_to_update = self.get_address_from_mode(instruction_pointer + 3, mode_0);
-          self.multiply([address_of_value_1, address_of_value_2, address_to_update]);
+          self.multiply(instruction_pointer, modes);
           instruction_pointer += 4
         }
         3 => {
