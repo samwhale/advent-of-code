@@ -1,6 +1,7 @@
 pub struct IntCodeComputer {
   pub code: Vec<i32>,
   pub inputs: Vec<i32>,
+  pub output: Vec<i32>,
 }
 
 impl IntCodeComputer {
@@ -8,6 +9,7 @@ impl IntCodeComputer {
     Self {
       code: Vec::new(),
       inputs: Vec::new(),
+      output: Vec::new(),
     }
   }
 
@@ -61,9 +63,13 @@ impl IntCodeComputer {
     self.inputs.drain(0..1);
   }
 
-  fn get_value(&self, address: usize) {
-    let address_to_lookup = self.code[address + 1] as usize;
-    println!("output: {}", self.code[address_to_lookup]);
+  /**
+   * 0 == position mode
+   * 1 == immediate mode
+   */
+  fn get_value(&mut self, address: usize, mode: i32) {
+    let address_of_param = self.get_address_from_mode(address + 1, mode);
+    self.output.push(self.code[address_of_param]);
   }
 
   fn get_address_from_mode(&self, address: usize, parameter: i32) -> usize {
@@ -85,7 +91,7 @@ impl IntCodeComputer {
     (modes, opcode)
   }
 
-  pub fn process_code(mut self, message: &str) -> Vec<i32> {
+  pub fn process_code(mut self, message: &str) -> (Vec<i32>, i32) {
     self.read(message);
     let mut instruction_pointer = 0;
     loop {
@@ -104,8 +110,66 @@ impl IntCodeComputer {
           instruction_pointer += 2;
         }
         4 => {
-          self.get_value(instruction_pointer);
+          self.get_value(instruction_pointer, modes[2]);
           instruction_pointer += 2;
+        }
+        5 => {
+          /*
+           * Opcode 5 is jump-if-true: if the first parameter is non-zero,
+           * it sets the instruction pointer to the value from the second parameter.
+           * Otherwise, it does nothing.
+           */
+          let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, modes[2]);
+          let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, modes[1]);
+          if self.code[address_of_param_1] != 0 {
+            instruction_pointer = self.code[address_of_param_2] as usize;
+          } else {
+            instruction_pointer += 3;
+          }
+        }
+        6 => {
+          /*
+           * Opcode 6 is jump-if-false: if the first parameter is zero,
+           * it sets the instruction pointer to the value from the second parameter.
+           * Otherwise, it does nothing.
+           */
+          let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, modes[2]);
+          let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, modes[1]);
+          if self.code[address_of_param_1] == 0 {
+            instruction_pointer = self.code[address_of_param_2] as usize;
+          } else {
+            instruction_pointer += 3;
+          }
+        }
+        7 => {
+          /*
+           * Opcode 7 is less than: if the first parameter is less than the second parameter,
+           * it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
+           */
+          let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, modes[2]);
+          let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, modes[1]);
+          let address_of_param_3 = self.get_address_from_mode(instruction_pointer + 3, modes[0]);
+          if self.code[address_of_param_1] < self.code[address_of_param_2] {
+            self.code[address_of_param_3] = 1;
+          } else {
+            self.code[address_of_param_3] = 0;
+          }
+          instruction_pointer += 4;
+        }
+        8 => {
+          /*
+           * Opcode 8 is equals: if the first parameter is equal to the second parameter,
+           * it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
+           */
+          let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, modes[2]);
+          let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, modes[1]);
+          let address_of_param_3 = self.get_address_from_mode(instruction_pointer + 3, modes[0]);
+          if self.code[address_of_param_1] == self.code[address_of_param_2] {
+            self.code[address_of_param_3] = 1;
+          } else {
+            self.code[address_of_param_3] = 0;
+          }
+          instruction_pointer += 4;
         }
         99 => break,
         _any => {
@@ -115,7 +179,9 @@ impl IntCodeComputer {
       }
     }
 
-    self.code
+    let output = self.output.iter().sum();
+
+    (self.code, output)
   }
 }
 
@@ -125,47 +191,155 @@ mod tests {
 
   #[test]
   fn process_code_1() {
-    let comp1 = IntCodeComputer::new();
-    assert_eq!(comp1.process_code("1,0,0,0,99"), vec![2, 0, 0, 0, 99]);
+    let comp = IntCodeComputer::new();
+    assert_eq!(comp.process_code("1,0,0,0,99").0, vec![2, 0, 0, 0, 99]);
   }
   #[test]
   fn process_code_2() {
-    let comp2 = IntCodeComputer::new();
-    assert_eq!(comp2.process_code("2,3,0,3,99"), vec![2, 3, 0, 6, 99]);
+    let comp = IntCodeComputer::new();
+    assert_eq!(comp.process_code("2,3,0,3,99").0, vec![2, 3, 0, 6, 99]);
   }
 
   #[test]
   fn process_code_3() {
-    let comp3 = IntCodeComputer::new();
+    let comp = IntCodeComputer::new();
     assert_eq!(
-      comp3.process_code("02,4,4,5,99,0"),
+      comp.process_code("02,4,4,5,99,0").0,
       vec![2, 4, 4, 5, 99, 9801]
     );
   }
 
   #[test]
   fn process_code_4() {
-    let comp4 = IntCodeComputer::new();
+    let comp = IntCodeComputer::new();
     assert_eq!(
-      comp4.process_code("01,1,1,4,99,5,6,0,99"),
+      comp.process_code("01,1,1,4,99,5,6,0,99").0,
       vec![30, 1, 1, 4, 2, 5, 6, 0, 99]
     );
   }
 
   #[test]
   fn process_code_5() {
-    let comp4 = IntCodeComputer::new();
-    assert_eq!(comp4.process_code("1002,4,3,4,33"), vec![1002, 4, 3, 4, 99]);
+    let comp = IntCodeComputer::new();
+    assert_eq!(
+      comp.process_code("1002,4,3,4,33").0,
+      vec![1002, 4, 3, 4, 99]
+    );
   }
 
   #[test]
   fn process_code_with_insert() {
-    let mut comp1 = IntCodeComputer::new();
-    comp1.add_inputs(vec![1]);
-
+    let mut comp = IntCodeComputer::new();
+    comp.add_inputs(vec![1]);
     assert_eq!(
-      comp1.process_code("01,0,0,0,3,3,99"),
+      comp.process_code("01,0,0,0,3,3,99").0,
       vec![2, 0, 0, 1, 3, 3, 99]
     );
+  }
+  #[test]
+  fn process_input_equal_to_8_position_mode() {
+    let mut comp1 = IntCodeComputer::new();
+    let mut comp2 = IntCodeComputer::new();
+    comp1.add_inputs(vec![8]);
+    comp2.add_inputs(vec![1]);
+
+    // should return 1 if input equal to 8, else 0
+    assert_eq!(comp1.process_code("3,9,8,9,10,9,4,9,99,-1,8").1, 1);
+    assert_eq!(comp2.process_code("3,9,8,9,10,9,4,9,99,-1,8").1, 0);
+  }
+
+  #[test]
+  fn process_input_equal_to_8_immediate_mode() {
+    let mut comp1 = IntCodeComputer::new();
+    let mut comp2 = IntCodeComputer::new();
+    comp1.add_inputs(vec![8]);
+    comp2.add_inputs(vec![1]);
+
+    // should return 1 if input equal to 8, else 0
+    assert_eq!(comp1.process_code("3,3,1108,-1,8,3,4,3,99").1, 1);
+    assert_eq!(comp2.process_code("3,3,1108,-1,8,3,4,3,99").1, 0);
+  }
+
+  #[test]
+  fn process_input_less_than_8_position_mode() {
+    let mut comp1 = IntCodeComputer::new();
+    let mut comp2 = IntCodeComputer::new();
+    comp1.add_inputs(vec![1]);
+    comp2.add_inputs(vec![10]);
+
+    // should return 1 if input less than 8, else 0
+    assert_eq!(comp1.process_code("3,9,7,9,10,9,4,9,99,-1,8").1, 1);
+    assert_eq!(comp2.process_code("3,9,7,9,10,9,4,9,99,-1,8").1, 0);
+  }
+
+  #[test]
+  fn process_input_less_than_8_immediate_mode() {
+    let mut comp1 = IntCodeComputer::new();
+    let mut comp2 = IntCodeComputer::new();
+    comp1.add_inputs(vec![1]);
+    comp2.add_inputs(vec![10]);
+
+    // should return 1 if input less than 8, else 0
+    assert_eq!(comp1.process_code("3,3,1107,-1,8,3,4,3,99").1, 1);
+    assert_eq!(comp2.process_code("3,3,1107,-1,8,3,4,3,99").1, 0);
+  }
+
+  #[test]
+  fn process_jump_position_mode() {
+    let mut comp1 = IntCodeComputer::new();
+    let mut comp2 = IntCodeComputer::new();
+    comp1.add_inputs(vec![0]);
+    comp2.add_inputs(vec![-12]);
+
+    // output 0 if the input was zero or 1 if the input was non-zero:
+    assert_eq!(
+      comp1
+        .process_code("3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9")
+        .1,
+      0
+    );
+    assert_eq!(
+      comp2
+        .process_code("3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9")
+        .1,
+      1
+    );
+  }
+
+  #[test]
+  fn process_jump_immediate_mode() {
+    let mut comp1 = IntCodeComputer::new();
+    let mut comp2 = IntCodeComputer::new();
+    comp1.add_inputs(vec![0]);
+    comp2.add_inputs(vec![-12]);
+
+    // output 0 if the input was zero or 1 if the input was non-zero:
+    assert_eq!(
+      comp1.process_code("3,3,1105,-1,9,1101,0,0,12,4,12,99,1").1,
+      0
+    );
+    assert_eq!(
+      comp2.process_code("3,3,1105,-1,9,1101,0,0,12,4,12,99,1").1,
+      1
+    );
+  }
+
+  #[test]
+  fn process_large_message() {
+    let mut comp1 = IntCodeComputer::new();
+    let mut comp2 = IntCodeComputer::new();
+    let mut comp3 = IntCodeComputer::new();
+    comp1.add_inputs(vec![7]);
+    comp2.add_inputs(vec![8]);
+    comp3.add_inputs(vec![9]);
+
+    let message = "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
+
+    // The program will then output 999 if the input value is below 8,
+    // output 1000 if the input value is equal to 8,
+    // or output 1001 if the input value is greater than 8.
+    assert_eq!(comp1.process_code(message).1, 999);
+    assert_eq!(comp2.process_code(message).1, 1000);
+    assert_eq!(comp3.process_code(message).1, 1001);
   }
 }
