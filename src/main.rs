@@ -24,6 +24,9 @@ fn main() {
             "day5" => {
                 days::day5::main();
             }
+            "day6" => {
+                days::day6::main();
+            }
             _ => (),
         }
     } else {
