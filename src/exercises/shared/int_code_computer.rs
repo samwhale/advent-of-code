@@ -2,6 +2,7 @@ pub struct IntCodeComputer {
   pub code: Vec<i32>,
   pub inputs: Vec<i32>,
   pub output: Vec<i32>,
+  pub instruction_pointer: usize,
 }
 
 impl IntCodeComputer {
@@ -10,7 +11,51 @@ impl IntCodeComputer {
       code: Vec::new(),
       inputs: Vec::new(),
       output: Vec::new(),
+      instruction_pointer: 0,
     }
+  }
+  pub fn process_code(mut self, message: &str) -> (Vec<i32>, i32) {
+    self.read(message);
+    loop {
+      match self.code[self.instruction_pointer] % 100 {
+        1 => self.add(),
+        2 => self.multiply(),
+        3 => self.insert(),
+        4 => self.output(),
+        5 => self.jump_if_true(),
+        6 => self.jump_if_false(),
+        7 => self.less_than(),
+        8 => self.equals(),
+        99 => break,
+        _any => {
+          println!("uh oh, got input: {}", _any);
+          panic!()
+        }
+      }
+    }
+
+    let output = self.output.iter().sum();
+
+    (self.code, output)
+  }
+
+  fn get_positions(&mut self, parameter_length: usize) -> [usize; 3] {
+    let opcode = self.code[self.instruction_pointer];
+    let modes: [usize; 3] = [
+      (opcode / 100 % 10) as usize,
+      (opcode / 1000 % 10) as usize,
+      (opcode / 10000 % 10) as usize,
+    ];
+
+    let mut positions: [usize; 3] = [0 as usize; 3];
+    for index in 0..parameter_length {
+      positions[index] = if modes[index] == 0 {
+        self.code[self.instruction_pointer + index + 1] as usize
+      } else {
+        self.instruction_pointer + index + 1
+      }
+    }
+    positions
   }
 
   fn read(&mut self, message: &str) {
@@ -24,164 +69,66 @@ impl IntCodeComputer {
     self.inputs = inputs;
   }
 
-  /**
-   * Sum the values at `address_of_param_1` and `address_of_param_2`.
-   * Insert the result at the `address_to_update`
-   */
-  fn add(&mut self, instruction_pointer: usize, [mode_3, mode_2, mode_1]: [i32; 3]) {
-    let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, mode_1);
-    let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, mode_2);
-    let address_to_update = self.get_address_from_mode(instruction_pointer + 3, mode_3);
-
-    let sum = self.code[address_of_param_1] + self.code[address_of_param_2];
-
-    self.code[address_to_update] = sum;
+  fn add(&mut self) {
+    let [address_1, address_2, address_3] = self.get_positions(3);
+    self.code[address_3] = self.code[address_1] + self.code[address_2];
+    self.instruction_pointer += 4;
   }
 
-  /**
-   * Multiply the values of parameter 1 and 2
-   * Insert the result at the `address_to_update`
-   */
-  fn multiply(&mut self, instruction_pointer: usize, [mode_3, mode_2, mode_1]: [i32; 3]) {
-    let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, mode_1);
-    let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, mode_2);
-    let address_to_update = self.get_address_from_mode(instruction_pointer + 3, mode_3);
-
-    let mult = self.code[address_of_param_1] * self.code[address_of_param_2];
-
-    self.code[address_to_update] = mult;
+  fn multiply(&mut self) {
+    let [address_1, address_2, address_3] = self.get_positions(3);
+    self.code[address_3] = self.code[address_1] * self.code[address_2];
+    self.instruction_pointer += 4;
   }
 
-  /**
-   * Multiply the values at `address_of_param_1` and `address_of_param_2`.
-   * Insert the result at the `address_to_update`
-   */
-  fn insert(&mut self, instruction_pointer: usize) {
-    let address_to_update = self.code[instruction_pointer + 1] as usize;
-
-    self.code[address_to_update] = self.inputs[0];
+  fn insert(&mut self) {
+    let [address_1, _, _] = self.get_positions(1);
+    self.code[address_1] = self.inputs[0];
     self.inputs.drain(0..1);
+    self.instruction_pointer += 2;
   }
 
-  /**
-   * 0 == position mode
-   * 1 == immediate mode
-   */
-  fn get_value(&mut self, address: usize, mode: i32) {
-    let address_of_param = self.get_address_from_mode(address + 1, mode);
-    self.output.push(self.code[address_of_param]);
+  fn output(&mut self) {
+    let [address_1, _, _] = self.get_positions(1);
+    self.output.push(self.code[address_1]);
+    self.instruction_pointer += 2;
   }
 
-  fn get_address_from_mode(&self, address: usize, parameter: i32) -> usize {
-    if parameter == 1 {
-      return address as usize;
+  fn jump_if_true(&mut self) {
+    let [address_1, address_2, _] = self.get_positions(2);
+    if self.code[address_1] != 0 {
+      self.instruction_pointer = self.code[address_2] as usize;
+    } else {
+      self.instruction_pointer += 3;
     }
-
-    self.code[address as usize] as usize
   }
-
-  fn get_opcode_and_modes(&self, address: usize) -> ([i32; 3], i32) {
-    let full_opcode = self.code[address];
-    let opcode = full_opcode % 100;
-    let modes: [i32; 3] = [
-      full_opcode / 10000 % 10,
-      full_opcode / 1000 % 10,
-      full_opcode / 100 % 10,
-    ];
-    (modes, opcode)
-  }
-
-  pub fn process_code(mut self, message: &str) -> (Vec<i32>, i32) {
-    self.read(message);
-    let mut instruction_pointer = 0;
-    loop {
-      let (modes, opcode) = self.get_opcode_and_modes(instruction_pointer);
-      match opcode {
-        1 => {
-          self.add(instruction_pointer, modes);
-          instruction_pointer += 4
-        }
-        2 => {
-          self.multiply(instruction_pointer, modes);
-          instruction_pointer += 4
-        }
-        3 => {
-          self.insert(instruction_pointer);
-          instruction_pointer += 2;
-        }
-        4 => {
-          self.get_value(instruction_pointer, modes[2]);
-          instruction_pointer += 2;
-        }
-        5 => {
-          /*
-           * Opcode 5 is jump-if-true: if the first parameter is non-zero,
-           * it sets the instruction pointer to the value from the second parameter.
-           * Otherwise, it does nothing.
-           */
-          let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, modes[2]);
-          let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, modes[1]);
-          if self.code[address_of_param_1] != 0 {
-            instruction_pointer = self.code[address_of_param_2] as usize;
-          } else {
-            instruction_pointer += 3;
-          }
-        }
-        6 => {
-          /*
-           * Opcode 6 is jump-if-false: if the first parameter is zero,
-           * it sets the instruction pointer to the value from the second parameter.
-           * Otherwise, it does nothing.
-           */
-          let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, modes[2]);
-          let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, modes[1]);
-          if self.code[address_of_param_1] == 0 {
-            instruction_pointer = self.code[address_of_param_2] as usize;
-          } else {
-            instruction_pointer += 3;
-          }
-        }
-        7 => {
-          /*
-           * Opcode 7 is less than: if the first parameter is less than the second parameter,
-           * it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
-           */
-          let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, modes[2]);
-          let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, modes[1]);
-          let address_of_param_3 = self.get_address_from_mode(instruction_pointer + 3, modes[0]);
-          if self.code[address_of_param_1] < self.code[address_of_param_2] {
-            self.code[address_of_param_3] = 1;
-          } else {
-            self.code[address_of_param_3] = 0;
-          }
-          instruction_pointer += 4;
-        }
-        8 => {
-          /*
-           * Opcode 8 is equals: if the first parameter is equal to the second parameter,
-           * it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
-           */
-          let address_of_param_1 = self.get_address_from_mode(instruction_pointer + 1, modes[2]);
-          let address_of_param_2 = self.get_address_from_mode(instruction_pointer + 2, modes[1]);
-          let address_of_param_3 = self.get_address_from_mode(instruction_pointer + 3, modes[0]);
-          if self.code[address_of_param_1] == self.code[address_of_param_2] {
-            self.code[address_of_param_3] = 1;
-          } else {
-            self.code[address_of_param_3] = 0;
-          }
-          instruction_pointer += 4;
-        }
-        99 => break,
-        _any => {
-          println!("uh oh, got input: {}", _any);
-          panic!()
-        }
-      }
+  fn jump_if_false(&mut self) {
+    let [address_1, address_2, _] = self.get_positions(2);
+    if self.code[address_1] == 0 {
+      self.instruction_pointer = self.code[address_2] as usize;
+    } else {
+      self.instruction_pointer += 3;
     }
+  }
 
-    let output = self.output.iter().sum();
+  fn less_than(&mut self) {
+    let [address_1, address_2, address_3] = self.get_positions(3);
+    if self.code[address_1] < self.code[address_2] {
+      self.code[address_3] = 1;
+    } else {
+      self.code[address_3] = 0;
+    }
+    self.instruction_pointer += 4;
+  }
 
-    (self.code, output)
+  fn equals(&mut self) {
+    let [address_1, address_2, address_3] = self.get_positions(3);
+    if self.code[address_1] == self.code[address_2] {
+      self.code[address_3] = 1;
+    } else {
+      self.code[address_3] = 0;
+    }
+    self.instruction_pointer += 4;
   }
 }
 
