@@ -91,7 +91,9 @@ impl IntCodeComputer {
   }
 
   pub fn add_inputs(&mut self, inputs: Vec<i32>) {
-    self.inputs = inputs;
+    for input in inputs.iter() {
+      self.inputs.push(*input);
+    }
   }
 
   fn add(&mut self) {

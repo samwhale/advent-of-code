@@ -13,14 +13,19 @@ pub fn run_amplification_circuit(
   let mut amplifier_d = IntCodeComputer::new(message);
   let mut amplifier_e = IntCodeComputer::new(message);
   amplifier_a.add_inputs(vec![phase_settings[0], input_to_amplifier_a]);
+  amplifier_b.add_inputs(vec![phase_settings[1]]);
+  amplifier_c.add_inputs(vec![phase_settings[2]]);
+  amplifier_d.add_inputs(vec![phase_settings[3]]);
+  amplifier_e.add_inputs(vec![phase_settings[4]]);
+
   let result_a = amplifier_a.process_code();
-  amplifier_b.add_inputs(vec![phase_settings[1], result_a.output[0]]);
+  amplifier_b.add_inputs(vec![result_a.output[0]]);
   let result_b = amplifier_b.process_code();
-  amplifier_c.add_inputs(vec![phase_settings[2], result_b.output[0]]);
+  amplifier_c.add_inputs(vec![result_b.output[0]]);
   let result_c = amplifier_c.process_code();
-  amplifier_d.add_inputs(vec![phase_settings[3], result_c.output[0]]);
+  amplifier_d.add_inputs(vec![result_c.output[0]]);
   let result_d = amplifier_d.process_code();
-  amplifier_e.add_inputs(vec![phase_settings[4], result_d.output[0]]);
+  amplifier_e.add_inputs(vec![result_d.output[0]]);
   let result_e = amplifier_e.process_code();
   result_e.output[0]
 }
