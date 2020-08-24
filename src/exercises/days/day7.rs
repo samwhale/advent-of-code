@@ -46,10 +46,10 @@ pub fn run_feedback_loop(
   amplifier_e.add_inputs(vec![phase_settings[4], result_d.output[0]]);
   let mut system_result = amplifier_e.process_code();
   while result_a.is_waiting
-    && result_b.is_waiting
-    && result_c.is_waiting
-    && result_d.is_waiting
-    && system_result.is_waiting
+    || result_b.is_waiting
+    || result_c.is_waiting
+    || result_d.is_waiting
+    || system_result.is_waiting
   {
     amplifier_a.add_inputs(vec![system_result.output[0]]);
     result_a = amplifier_a.process_code();
