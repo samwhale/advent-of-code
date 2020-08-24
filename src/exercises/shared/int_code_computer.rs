@@ -3,6 +3,13 @@ pub struct IntCodeComputer {
   pub inputs: Vec<i32>,
   pub output: Vec<i32>,
   pub instruction_pointer: usize,
+  pub completed: bool,
+}
+
+pub struct IntCodeComputerResult {
+  pub code: Vec<i32>,
+  pub output: i32,
+  pub completed: bool,
 }
 
 impl IntCodeComputer {
@@ -12,21 +19,35 @@ impl IntCodeComputer {
       inputs: Vec::new(),
       output: Vec::new(),
       instruction_pointer: 0,
+      completed: false,
     }
   }
-  pub fn process_code(mut self, message: &str) -> (Vec<i32>, i32) {
+  pub fn process_code(mut self, message: &str) -> IntCodeComputerResult {
     self.read(message);
+    println!("inputs: {:?}", self.inputs);
+
     loop {
+      println!("opcode: {}", self.code[self.instruction_pointer] % 100);
+      println!("code: {:?}", self.code);
       match self.code[self.instruction_pointer] % 100 {
         1 => self.add(),
         2 => self.multiply(),
-        3 => self.insert(),
+        3 => {
+          if self.inputs.len() == 0 {
+            println!("Your inputs are empty ugh");
+            break;
+          }
+          self.insert();
+        }
         4 => self.output(),
         5 => self.jump_if_true(),
         6 => self.jump_if_false(),
         7 => self.less_than(),
         8 => self.equals(),
-        99 => break,
+        99 => {
+          self.completed = true;
+          break;
+        }
         _any => {
           println!("uh oh, got input: {}", _any);
           panic!()
@@ -35,8 +56,13 @@ impl IntCodeComputer {
     }
 
     let output = self.output.iter().sum();
+    println!("output arr: {:?}", self.output);
 
-    (self.code, output)
+    IntCodeComputerResult {
+      code: self.code,
+      output,
+      completed: self.completed,
+    }
   }
 
   fn get_positions(&mut self, parameter_length: usize) -> [usize; 3] {
@@ -87,7 +113,6 @@ impl IntCodeComputer {
     self.inputs.drain(0..1);
     self.instruction_pointer += 2;
   }
-
   fn output(&mut self) {
     let [address_1, _, _] = self.get_positions(1);
     self.output.push(self.code[address_1]);
@@ -96,6 +121,7 @@ impl IntCodeComputer {
 
   fn jump_if_true(&mut self) {
     let [address_1, address_2, _] = self.get_positions(2);
+    println!("{}, {}", address_1, address_2);
     if self.code[address_1] != 0 {
       self.instruction_pointer = self.code[address_2] as usize;
     } else {
