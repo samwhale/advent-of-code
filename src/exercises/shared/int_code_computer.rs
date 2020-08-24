@@ -2,7 +2,7 @@ pub struct IntCodeComputer {
   code: Vec<i32>,
   inputs: Vec<i32>,
   instruction_pointer: usize,
-  is_waiting: bool,
+  pub is_done: bool,
   output: Vec<i32>,
 }
 
@@ -10,7 +10,6 @@ pub struct IntCodeComputer {
 pub struct IntCodeComputerResult {
   pub code: Vec<i32>,
   pub output: Vec<i32>,
-  pub is_waiting: bool,
 }
 
 pub fn read_code(message: &str) -> Vec<i32> {
@@ -27,14 +26,14 @@ impl IntCodeComputer {
     Self {
       code: read_code(message),
       inputs: Vec::new(),
-      output: Vec::new(),
       instruction_pointer: 0,
-      is_waiting: false,
+      is_done: false,
+      output: Vec::new(),
     }
   }
 
   pub fn process_code(&mut self) -> IntCodeComputerResult {
-    self.is_waiting = false;
+    self.is_done = false;
     self.output = Vec::new();
     loop {
       match self.code[self.instruction_pointer] % 100 {
@@ -43,7 +42,6 @@ impl IntCodeComputer {
         3 => {
           if self.inputs.len() == 0 {
             // wait for new input
-            self.is_waiting = true;
             break;
           }
           self.insert();
@@ -54,7 +52,7 @@ impl IntCodeComputer {
         7 => self.less_than(),
         8 => self.equals(),
         99 => {
-          self.is_waiting = false;
+          self.is_done = true;
           break;
         }
         _any => {
@@ -67,7 +65,6 @@ impl IntCodeComputer {
     IntCodeComputerResult {
       code: self.code.clone(),
       output: self.output.clone(),
-      is_waiting: self.is_waiting,
     }
   }
 
@@ -114,6 +111,7 @@ impl IntCodeComputer {
     self.inputs.drain(0..1);
     self.instruction_pointer += 2;
   }
+
   fn output(&mut self) {
     let [address_1, _, _] = self.get_positions(1);
     self.output.push(self.code[address_1]);
@@ -128,6 +126,7 @@ impl IntCodeComputer {
       self.instruction_pointer += 3;
     }
   }
+
   fn jump_if_false(&mut self) {
     let [address_1, address_2, _] = self.get_positions(2);
     if self.code[address_1] == 0 {
