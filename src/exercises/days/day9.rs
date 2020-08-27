@@ -14,6 +14,5 @@ pub fn main() {
   let result1 = sensor_boost(&message, false);
   let result2 = sensor_boost(&message, true);
   println!("Test mode -> output: {:?}", result1);
-  println!("--- Part 2 ---");
   println!("BOOST MODE -> output: {:?}", result2);
 }
