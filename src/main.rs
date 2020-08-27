@@ -33,6 +33,9 @@ fn main() {
             "day8" => {
                 days::day8::main();
             }
+            "day9" => {
+                days::day9::main();
+            }
             _ => (),
         }
     } else {

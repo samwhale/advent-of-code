@@ -4,9 +4,9 @@ use permutator::Permutation;
 
 pub fn run_amplification_circuit(
   message: &str,
-  input_to_amplifier_a: i32,
-  phase_settings: &Vec<i32>,
-) -> i32 {
+  input_to_amplifier_a: i64,
+  phase_settings: &Vec<i64>,
+) -> i64 {
   let mut amplifier_a = IntCodeComputer::new(message);
   let mut amplifier_b = IntCodeComputer::new(message);
   let mut amplifier_c = IntCodeComputer::new(message);
@@ -30,8 +30,8 @@ pub fn run_amplification_circuit(
   input_to_amplifier_a
 }
 
-pub fn part_1(message: &str) -> i32 {
-  let mut results: Vec<i32> = Vec::new();
+pub fn part_1(message: &str) -> i64 {
+  let mut results: Vec<i64> = Vec::new();
   [0, 1, 2, 3, 4]
     .permutation()
     .for_each(|permutation| results.push(run_amplification_circuit(&message, 0, &permutation)));
@@ -39,8 +39,8 @@ pub fn part_1(message: &str) -> i32 {
   *results.iter().max().unwrap()
 }
 
-pub fn part_2(message: &str) -> i32 {
-  let mut results: Vec<i32> = Vec::new();
+pub fn part_2(message: &str) -> i64 {
+  let mut results: Vec<i64> = Vec::new();
   [9, 8, 7, 6, 5]
     .permutation()
     .for_each(|permutation| results.push(run_amplification_circuit(&message, 0, &permutation)));
