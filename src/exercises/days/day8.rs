@@ -66,14 +66,14 @@ pub fn validate_transmission(image: Vec<u32>) -> u32 {
  * 1 is white
  * 2 is transparent
  */
-pub fn get_pixel_value(image: &Vec<Layer>, index: usize) -> u32 {
+pub fn get_pixel_value(image: &Vec<Layer>, index: usize) -> &str {
   for layer in image.iter() {
     match layer.layer[index] {
       0 => {
-        return 0;
+        return ".";
       }
       1 => {
-        return 1;
+        return "#";
       }
       2 => {}
       _ => {
@@ -82,17 +82,17 @@ pub fn get_pixel_value(image: &Vec<Layer>, index: usize) -> u32 {
     }
   }
 
-  2
+  " "
 }
 
-pub fn format_image(image: Vec<u32>, [num_columns, num_rows]: [u32; 2]) -> Vec<Vec<u32>> {
-  let mut result = Vec::new();
+pub fn format_image(image: Vec<String>, [num_columns, num_rows]: [u32; 2]) -> Vec<Vec<String>> {
+  let mut result: Vec<Vec<String>> = Vec::new();
   for row_index in 0..num_rows {
-    let mut row = Vec::new();
+    let mut row: Vec<String> = Vec::new();
 
     for column_index in 0..num_columns {
       let digit_index = ((row_index * num_columns) + column_index) as usize;
-      row.push(image[digit_index]);
+      row.push(image[digit_index].clone());
     }
     result.push(row);
   }
@@ -100,10 +100,10 @@ pub fn format_image(image: Vec<u32>, [num_columns, num_rows]: [u32; 2]) -> Vec<V
   result
 }
 
-pub fn create_image(image: Vec<Layer>, dimensions: [u32; 2]) -> Vec<Vec<u32>> {
-  let mut result: Vec<u32> = Vec::new();
+pub fn create_image(image: Vec<Layer>, dimensions: [u32; 2]) -> Vec<Vec<String>> {
+  let mut result: Vec<String> = Vec::new();
   for index in 0..image[0].layer.len() {
-    let pixel_value = get_pixel_value(&image, index);
+    let pixel_value = get_pixel_value(&image, index).to_string();
     result.push(pixel_value);
   }
 
@@ -124,7 +124,7 @@ pub fn main() {
   let result = create_image(processed_image, dimensions);
   println!("Message:");
   for row in result {
-    println!("{:?}", row);
+    println!("{:?}", row.join(""));
   }
 }
 
@@ -184,7 +184,7 @@ mod tests {
   #[test]
   pub fn create_image_test() {
     let image = read_image("0222112222120000", [2, 2]);
-    let result = vec![vec![0, 1], vec![1, 0]];
+    let result = vec![vec![".", "#"], vec!["#", "."]];
     assert_eq!(create_image(image, [2, 2]), result);
   }
 }
