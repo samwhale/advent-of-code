@@ -181,41 +181,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn process_code_1() {
-        let mut comp = IntCodeComputer::new("1,0,0,0,99");
-        assert_eq!(comp.process_code().code, vec![2, 0, 0, 0, 99]);
-    }
-    #[test]
-    fn process_code_2() {
-        let mut comp = IntCodeComputer::new("2,3,0,3,99");
-        assert_eq!(comp.process_code().code, vec![2, 3, 0, 6, 99]);
-    }
-
-    #[test]
-    fn process_code_3() {
-        let mut comp = IntCodeComputer::new("02,4,4,5,99,0");
-        assert_eq!(comp.process_code().code, vec![2, 4, 4, 5, 99, 9801]);
-    }
-
-    #[test]
-    fn process_code_4() {
-        let mut comp = IntCodeComputer::new("01,1,1,4,99,5,6,0,99");
-        assert_eq!(comp.process_code().code, vec![30, 1, 1, 4, 2, 5, 6, 0, 99]);
-    }
-
-    #[test]
-    fn process_code_5() {
-        let mut comp = IntCodeComputer::new("1002,4,3,4,33");
-        assert_eq!(comp.process_code().code, vec![1002, 4, 3, 4, 99]);
-    }
-
-    #[test]
-    fn process_code_with_insert() {
-        let mut comp = IntCodeComputer::new("01,0,0,0,3,3,99");
-        comp.add_inputs(vec![1]);
-        assert_eq!(comp.process_code().code, vec![2, 0, 0, 1, 3, 3, 99]);
-    }
-    #[test]
     fn process_input_equal_to_8_position_mode() {
         let message = "3,9,8,9,10,9,4,9,99,-1,8";
         let mut comp1 = IntCodeComputer::new(message);

@@ -7,6 +7,5 @@ pub fn main() {
     let result = int_code_computer.process_code();
 
     println!("--- Day 2 ---");
-    println!("message: {:?}", message);
-    println!("processed: {:?}", result.code);
+    println!("answer: {:?}", result.code[0]);
 }
